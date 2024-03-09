@@ -1,4 +1,5 @@
 import mongodb from 'mongodb';
+/* eslint-disable */
 
 /**
  * Represents a MongoDB client.
@@ -39,6 +40,29 @@ class DBClient {
    */
   async nbFiles() {
     return this.client.db().collection('files').countDocuments();
+  }
+
+  async usersCollection() {
+    return this.client.db().collection('users');
+  }
+
+  async filesCollection() {
+    return this.client.db().collection('files');
+  }
+
+  async findBy(obj, coll) {
+    if (typeof obj != 'object'){
+      return new Error('search values must be an object');
+    }
+
+    return this.client.db().collection(coll).find(obj)
+  }
+
+  async insertDB(doc, coll) {
+    if (typeof doc != 'object'){
+      return new Error('document must be an object');
+    }
+    return this.client.db().collection(coll).insertOne(doc);
   }
 }
 

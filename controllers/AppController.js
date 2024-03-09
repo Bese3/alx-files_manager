@@ -11,7 +11,7 @@ export default class AppController {
             redis = true;
         }
         if (dbClient.isAlive()) {
-            db = true
+            db = true;
         }
         res.json({redis, db});
     }
@@ -23,4 +23,3 @@ export default class AppController {
         })
     }
 }
-
