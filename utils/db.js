@@ -20,14 +20,13 @@ class DBClient {
         const uri = `mongodb://${this.host}:${this.port}/${this.database}`;
         this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
         this.isConnected = false;
-        this.client.connect((err) => {
-            if (err) {
-                this.isConnected = false;
-                return
-            }
+        this.client.connect();
+        this.client.on('connected', () => {
             this.isConnected = true;
-        });
-        this.db = this.client.db();
+        })
+        .on('disconnected', () => {
+            this.isConnected = false;
+        })
     }
 
     /**
@@ -42,8 +41,7 @@ class DBClient {
      * asynchronously.
      */
     async nbUsers() {
-        const userCollection = this.db.collection('users');
-        const count = await userCollection.countDocuments();
+        const count = await this.client.db().collection('users').countDocuments();
         return count;
     }
 
@@ -52,9 +50,7 @@ class DBClient {
      * asynchronously.
      */
     async nbFiles() {
-        const fileCollection = this.db.collection('files');
-        const count = await fileCollection.countDocuments();
-        return count;
+        return await this.client.db().collection('files').countDocuments();
     }
 }
 
