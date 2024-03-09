@@ -1,73 +1,44 @@
-#!/usr/bin/node
-
-/** The `RedisClient` class in JavaScript creates a Redis client,
- *  handles connection events.
- */
-
 import { createClient } from 'redis';
 import { promisify } from 'util';
 
+// class to define methods for commonly used redis commands
 class RedisClient {
-  /**
-     * This JavaScript constructor function creates a
-     * Redis client and handles connection events.
-     */
   constructor() {
     this.client = createClient();
-    this.isconnected = true;
-    this.client.on('connect', () => {
-      // console.log(`Redis client connected`)
-      this.isconnected = true;
-    });
-    this.client.on('error', (err) => {
-      console.log(`Redis connection error ${err}`);
-      this.isconnected = false;
+    this.client.on('error', (error) => {
+      console.log(`Redis client not connected to server: ${error}`);
     });
   }
 
-  /**
-     * The function isAlive() returns the value of the isconnected property.
-     * @returns The `isAlive()` function is returning the value of the `isconnected` property.
-     */
+  // check connection status and report
   isAlive() {
-    return this.isconnected;
+    if (this.client.connected) {
+      return true;
+    }
+    return false;
   }
 
-  /**
-     * @param key - The `key` parameter is used to specify the key for which you
-     * want to retrieve the value from the data store.
-     */
+  // get value for given key from redis server
   async get(key) {
-    const GET = promisify(this.client.GET).bind(this.client);
-    const result = await GET(key);
-    return result;
+    const redisGet = promisify(this.client.get).bind(this.client);
+    const value = await redisGet(key);
+    return value;
   }
 
-  /**
-     * @param key - The `key` parameter is a name for the data that you want to
-     * store in the database.
-     * @param value - The `value` parameter represents the value that you want to
-     * associate with the specified key in the data store.
-     * @param duration - The `duration` parameter is the expiration time in seconds for the
-     * key-value pair being set in the Redis database.
-     */
-  async set(key, value, duration) {
-    const SET = promisify(this.client.SET).bind(this.client);
-    await SET(key, value, 'EX', duration);
+  // set key value pair to redis server
+  async set(key, value, time) {
+    const redisSet = promisify(this.client.set).bind(this.client);
+    await redisSet(key, value);
+    await this.client.expire(key, time);
   }
 
-  /**
-     * The `del` function asynchronously deletes a key from a Redis database.
-     * @param key - The `key` parameter represents the key of the data
-     * that you want to delete from the database or cache.
-     */
+  // del key vale pair from redis server
   async del(key) {
-    const DEL = promisify(this.client.DEL).bind(this.client);
-    await DEL(key);
+    const redisDel = promisify(this.client.del).bind(this.client);
+    await redisDel(key);
   }
 }
 
 const redisClient = new RedisClient();
 
-// export = redisClient;
-export default redisClient;
+module.exports = redisClient;
