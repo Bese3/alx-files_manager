@@ -1,4 +1,4 @@
-// eslint-disable-next-line import/extensions
+/* eslint-disable */
 import AppController from '../controllers/AppController.js';
 import UsersController from '../controllers/UsersController.js';
 
