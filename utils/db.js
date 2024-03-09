@@ -17,7 +17,7 @@ class DBClient {
         this.host = process.env.DB_HOST || 'localhost';
         this.port = Number(process.env.DB_PORT) || 27017;
         this.database = process.env.DB_DATABASE || 'file_manager';
-        const uri = `mongodb://${this.host}:${this.port}`;
+        const uri = `mongodb://${this.host}:${this.port}/${this.database}`;
         this.client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
         this.isConnected = false;
         this.client.connect((err) => {
@@ -27,7 +27,7 @@ class DBClient {
             }
             this.isConnected = true;
         });
-        this.db = this.client.db(this.database);
+        this.db = this.client.db();
     }
 
     /**
