@@ -58,6 +58,14 @@ class DBClient {
     return this.client.db().collection(coll).find(obj)
   }
 
+  async findByPag(obj, coll, page, pageSize) {
+    if (typeof obj != 'object'){
+      return new Error('search values must be an object');
+    }
+    return this.client.db().collection(coll).find(obj).limit(Number(pageSize)).skip(Number(page));
+  }
+
+
   async insertDB(doc, coll) {
     if (typeof doc != 'object'){
       return new Error('document must be an object');

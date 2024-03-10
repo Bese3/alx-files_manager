@@ -12,6 +12,8 @@ function injectRoutes(app) {
   app.get('/disconnect', AuthController.getDisconnect);
   app.get('/users/me', UsersController.me);
   app.post('/files', FilesController.postUpload);
+  app.get('/files', FilesController.getIndex);
+  app.get('/files/:id', FilesController.getShow);
 }
 
 export default injectRoutes;
