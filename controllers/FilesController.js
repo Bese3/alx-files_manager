@@ -80,11 +80,11 @@ export default class FilesController {
         const filePath = `${path}/${fileName}`;
         data = Buffer.from(data, 'base64').toString('utf-8');
         await fs.writeFile(filePath, data, (err) => {
-            console.log('file');
+
             if(err) {
                 return new Error(`cannot create file ${err}`)
             }
-            console.log(`temp file created at ${filePath}`);
+            // console.log(`temp file created at ${filePath}`);
         });
         doc = {
             userId,
