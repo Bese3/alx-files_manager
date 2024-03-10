@@ -35,7 +35,6 @@ export default class AuthController {
         })
         .then(async (result) => {
             if (result.length === 0){
-                console.log('res 0')
                 res.status(401).json({'error': 'Unauthorized'});
             } else {
             user = result[0];

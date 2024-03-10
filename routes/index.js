@@ -2,6 +2,7 @@
 import AppController from '../controllers/AppController.js';
 import UsersController from '../controllers/UsersController.js';
 import AuthController from '../controllers/AuthController.js';
+import FilesController from '../controllers/FilesController.js';
 
 function injectRoutes(app) {
   app.get('/status', AppController.getStatus);
@@ -10,6 +11,7 @@ function injectRoutes(app) {
   app.get('/connect', AuthController.getConnect);
   app.get('/disconnect', AuthController.getDisconnect);
   app.get('/users/me', UsersController.me);
+  app.post('/files', FilesController.postUpload);
 }
 
 export default injectRoutes;
