@@ -134,7 +134,7 @@ export default class FilesController {
         });
     }
 
-    static async getIndex(req, res, pageSize=20, page=0) {
+    static async getIndex(req, res) {
         if (!req.headers['x-token']) {
             res.status(401).json({'error': 'Unauthorized'});
             return
@@ -145,11 +145,15 @@ export default class FilesController {
             res.status(401).json({'error': 'Unauthorized'});
             return
         }
-        const parentId = req.query.parentId || '0';
+        let parentId = req.query.parentId || '0';
+        if (req.query.parentId) {
+            parentId = mongodb.ObjectId(parentId);
+        }
 
-        const skip = (page) * pageSize;
+        const page = req.query.page || 0;
+        const skip = (page) * (20);
 
-        await dbClient.findByPag({parentId}, 'files', skip, pageSize)
+        await dbClient.findByPag({parentId}, 'files', skip)
         .then((result) => {
             return result.toArray();
         })
@@ -158,6 +162,10 @@ export default class FilesController {
                 res.json([]);
                 return
             }
+            result.forEach(elem => {
+                elem.id = elem._id
+                delete elem._id;
+            });
             res.json(result);
             })
         

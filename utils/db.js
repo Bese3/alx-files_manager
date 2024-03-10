@@ -58,11 +58,11 @@ class DBClient {
     return this.client.db().collection(coll).find(obj)
   }
 
-  async findByPag(obj, coll, page, pageSize) {
+  async findByPag(obj, coll, page) {
     if (typeof obj != 'object'){
       return new Error('search values must be an object');
     }
-    return this.client.db().collection(coll).find(obj).limit(Number(pageSize)).skip(Number(page));
+    return this.client.db().collection(coll).find(obj).limit(20).skip(Number(page));
   }
 
 
