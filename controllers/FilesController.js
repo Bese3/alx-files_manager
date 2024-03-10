@@ -32,6 +32,7 @@ export default class FilesController {
             return
         }
         const objId = mongodb.ObjectId(req.body.parentId);
+        let inRes = false;
         if (req.body.parentId) {
             await dbClient.findBy({'_id': objId}, 'files')
             .then((result) => {
@@ -39,18 +40,20 @@ export default class FilesController {
             })
             .then((result) => {
                 if (result.length === 0) {
+                    inRes = true;
                     res.status(400).json({'error': 'Parent not found'});
                 }
-                console.log(result);
                 if (result[0].type != 'folder') {
+                    inRes = true;
                     res.status(400).json({'error': 'Parent is not a folder'});
                 }
             });
         }
+        if (inRes) return
         
         const name = req.body.name;
         const type = req.body.type;
-        const parentId = req.body.parentId || '0';
+        const parentId = req.body.parentId || 0;
         const isPublic = req.body.isPublic || false;
         let data = req.body.data;
         let doc = {
@@ -69,8 +72,7 @@ export default class FilesController {
                                     type,
                                     isPublic,
                                     parentId
-                                 })
-            return
+                                 });
         } else {
         const path = process.env.FOLDER_PATH || '/tmp/files_manager';
         const fileName = uuid4();
