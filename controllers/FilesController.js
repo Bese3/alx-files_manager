@@ -42,6 +42,7 @@ export default class FilesController {
                 if (result.length === 0) {
                     inRes = true;
                     res.status(400).json({'error': 'Parent not found'});
+                    return
                 }
                 if (result[0].type != 'folder') {
                     inRes = true;
