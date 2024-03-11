@@ -188,6 +188,7 @@ export default class FilesController {
         let userId = await redisClient.get(key);
         if (userId === null) {
             res.status(401).json({'error': 'Unauthorized'})
+            return
         }
         userId = mongodb.ObjectId(userId);
         const _id = mongodb.ObjectId(req.params.id);
@@ -208,7 +209,10 @@ export default class FilesController {
             const name = files.name;
             const type = files.type;
             const isPublic = files.isPublic;
-            const parentId = files.parentId;
+            let parentId = files.parentId;
+            if (parentId === '0') {
+                parentId = 0;
+            }
 
             res.json({
                 id,
@@ -232,6 +236,7 @@ export default class FilesController {
         let userId = await redisClient.get(key);
         if (userId === null) {
             res.status(401).json({'error': 'Unauthorized'})
+            return
         }
         userId = mongodb.ObjectId(userId);
         const _id = mongodb.ObjectId(req.params.id);
@@ -252,7 +257,10 @@ export default class FilesController {
             const name = files.name;
             const type = files.type;
             const isPublic = files.isPublic;
-            const parentId = files.parentId;
+            let parentId = files.parentId;
+            if (parentId === '0') {
+                parentId = 0;
+            }
 
             res.json({
                 id,
