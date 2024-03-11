@@ -55,7 +55,7 @@ export default class FilesController {
         
         const name = req.body.name;
         const type = req.body.type;
-        const parentId = req.body.parentId || 0;
+        const parentId = req.body.parentId || '0';
         const isPublic = req.body.isPublic || false;
         let data = req.body.data;
         let doc = {
@@ -152,14 +152,10 @@ export default class FilesController {
             res.status(401).json({'error': 'Unauthorized'});
             return
         }
-        let parentId = req.query.parentId || 0;
-        if (parentId === '0') {
-            parentId = Number(parentId)
-        }
+        let parentId = req.query.parentId || '0';
 
         const page = req.query.page || 0;
         const skip = (page) * (20);
-        console.log(typeof parentId)
 
         await dbClient.findByPag({parentId}, 'files', skip)
         .then((result) => {
