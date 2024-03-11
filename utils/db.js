@@ -72,6 +72,13 @@ class DBClient {
     }
     return this.client.db().collection(coll).insertOne(doc);
   }
+
+  async updateDB(doc, upDoc, coll) {
+    if (typeof doc != 'object'){
+      return new Error('document must be an object');
+    }
+    return this.client.db().collection(coll).findOneAndUpdate(doc, upDoc, {returnDocument: 'after'});
+  }
 }
 
 export const dbClient = new DBClient();

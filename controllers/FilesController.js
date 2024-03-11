@@ -13,11 +13,12 @@ export default class FilesController {
         }
         const token = req.headers['x-token'];
         const key = `auth_${token}`;
-        const userId = await redisClient.get(key);
+        let userId = await redisClient.get(key);
         if (userId === null) {
             res.status(401).json({'error': 'Unauthorized'});
             return
         }
+        userId = mongodb.ObjectId(userId);
         if (!req.body.name){
             res.status(400).json({'error': 'Missing name'});
             return
@@ -130,6 +131,12 @@ export default class FilesController {
                 res.status(404).json({'error': 'Not found'});
                 return
             }
+            result.forEach(elem => {
+                elem.id = elem._id
+                delete elem._id;
+                delete elem.filePath;
+            });
+            result = result.map(({id, ...result}) => ({id, ...result}))
             res.json(result[0]);
         });
     }
@@ -145,13 +152,14 @@ export default class FilesController {
             res.status(401).json({'error': 'Unauthorized'});
             return
         }
-        let parentId = req.query.parentId || '0';
-        if (req.query.parentId) {
-            parentId = mongodb.ObjectId(parentId);
+        let parentId = req.query.parentId || 0;
+        if (parentId === '0') {
+            parentId = Number(parentId)
         }
 
         const page = req.query.page || 0;
         const skip = (page) * (20);
+        console.log(typeof parentId)
 
         await dbClient.findByPag({parentId}, 'files', skip)
         .then((result) => {
@@ -165,9 +173,92 @@ export default class FilesController {
             result.forEach(elem => {
                 elem.id = elem._id
                 delete elem._id;
+                delete elem.filePath;
             });
+            result = result.map(({id, ...result}) => ({id, ...result}))
             res.json(result);
             })
-        
+    }
+
+    static async putPublish(req, res) {
+        if (!req.headers['x-token']) {
+            res.status(401).json({'error': 'Unauthorized'})
+            return
+        }
+
+        const token = req.headers['x-token'];
+        const key = `auth_${token}`;
+        let userId = await redisClient.get(key);
+        userId = mongodb.ObjectId(userId);
+        const _id = mongodb.ObjectId(req.params.id);
+        await dbClient.findBy({_id, userId}, 'files')
+        .then((result) => {
+            return result.toArray();
+        })
+        .then(async (result) => {
+            if (result.length === 0) {
+                res.status(404).json({'error': 'Not found'});
+                return
+            }
+            result = result[0];
+            let files = await dbClient.updateDB(result, {$set: {'isPublic': true}}, 'files');
+            files = files.value;
+            const id = files._id;
+            const userId = files.userId;
+            const name = files.name;
+            const type = files.type;
+            const isPublic = files.isPublic;
+            const parentId = files.parentId;
+
+            res.json({
+                id,
+                userId,
+                name,
+                type,
+                isPublic,
+                parentId
+            });
+        })
+    }
+
+    static async putUnpublish(req, res) {
+        if (!req.headers['x-token']) {
+            res.status(401).json({'error': 'Unauthorized'})
+            return
+        }
+
+        const token = req.headers['x-token'];
+        const key = `auth_${token}`;
+        let userId = await redisClient.get(key);
+        userId = mongodb.ObjectId(userId);
+        const _id = mongodb.ObjectId(req.params.id);
+        await dbClient.findBy({_id, userId}, 'files')
+        .then((result) => {
+            return result.toArray();
+        })
+        .then(async (result) => {
+            if (result.length === 0) {
+                res.status(404).json({'error': 'Not found'});
+                return
+            }
+            result = result[0];
+            let files = await dbClient.updateDB(result, {$set: {'isPublic': false}}, 'files');
+            files = (files.value);
+            const id = files._id;
+            const userId = files.userId;
+            const name = files.name;
+            const type = files.type;
+            const isPublic = files.isPublic;
+            const parentId = files.parentId;
+
+            res.json({
+                id,
+                userId,
+                name,
+                type,
+                isPublic,
+                parentId
+            });
+        })
     }
 }

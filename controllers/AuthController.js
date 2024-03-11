@@ -49,6 +49,7 @@ export default class AuthController {
     static async getDisconnect(req, res) {
         if (!req.headers['x-token']) {
             res.status(401).json({'error': 'Unauthorized'});
+            return
         }
         const token = req.headers['x-token'];
         const key = `auth_${token}`;
