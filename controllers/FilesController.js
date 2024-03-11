@@ -153,6 +153,9 @@ export default class FilesController {
             return
         }
         let parentId = req.query.parentId || '0';
+        if (parentId != '0') {
+            parentId = mongodb.ObjectId(parentId);
+        }
 
         const page = req.query.page || 0;
         const skip = (page) * (20);
