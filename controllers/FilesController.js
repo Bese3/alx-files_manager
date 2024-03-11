@@ -55,7 +55,7 @@ export default class FilesController {
         
         const name = req.body.name;
         const type = req.body.type;
-        const parentId = req.body.parentId || '0';
+        let parentId = req.body.parentId || '0';
         const isPublic = req.body.isPublic || false;
         let data = req.body.data;
         let doc = {
@@ -65,6 +65,11 @@ export default class FilesController {
             isPublic,
             parentId
         };
+        let pid = parentId;
+            if (parentId === '0'){
+                pid = 0;
+            }
+
 
         if (req.body.type === 'folder') {
             const result = await dbClient.insertDB(doc, 'files');
@@ -73,7 +78,7 @@ export default class FilesController {
                                     name,
                                     type,
                                     isPublic,
-                                    parentId
+                                    'parentId': pid
                                  });
         } else {
         const path = process.env.FOLDER_PATH || '/tmp/files_manager';
@@ -87,14 +92,7 @@ export default class FilesController {
             }
             // console.log(`temp file created at ${filePath}`);
         });
-        doc = {
-            userId,
-            name,
-            type,
-            isPublic,
-            parentId,
-            filePath
-        };
+        doc.filePath = filePath;
         const result = await dbClient.insertDB(doc, 'files');
         res.status(201).json({
             'id': result.insertedId,
@@ -102,7 +100,7 @@ export default class FilesController {
             name,
             type,
             isPublic,
-            parentId
+            'parentId': pid
         })
         }
     }
