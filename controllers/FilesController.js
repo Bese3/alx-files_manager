@@ -4,6 +4,7 @@ import redisClient from "../utils/redis.js";
 import mongodb from 'mongodb';
 import { v4 as uuid4 } from 'uuid';
 import fs from 'fs';
+import mime from 'mime-types';
 
 export default class FilesController {
     static async postUpload(req, res) {
@@ -90,7 +91,7 @@ export default class FilesController {
             if(err) {
                 return new Error(`cannot create file ${err}`)
             }
-            // console.log(`temp file created at ${filePath}`);
+            console.log(`temp file created at ${filePath}`);
         });
         doc.filePath = filePath;
         const result = await dbClient.insertDB(doc, 'files');
@@ -271,5 +272,60 @@ export default class FilesController {
                 parentId
             });
         })
+    }
+
+    static async getFile(req, res) {
+        if(!req.params.id) {
+            res.status(404).json({'error': 'Not found'});
+            return
+        }
+        let fileId = req.params.id;
+        let userId = await redisClient.get(`auth_${req.headers['x-token']}`);
+        // if (userId === null) {
+        //     res.status(404).json({'error': 'Not found'});
+        //     return
+        // }
+        fileId = mongodb.ObjectId(fileId);
+        userId = mongodb.ObjectId(userId);
+        let authenticated = false;
+        await dbClient.findBy({userId}, 'users')
+              .then((result) => {
+                return result.toArray();
+              })
+              .then(async (result) => {
+                if (result.length > 0) {
+                    authenticated = true;
+                }
+
+            await dbClient.findBy({'_id': fileId}, 'files')
+              .then((result) => {
+                return result.toArray();
+              })
+              .then((result) => {
+                if (result.length === 0) {
+                    res.status(404).json({'error': 'Not found'});
+                    return
+                }
+                result = result[0]
+                if (!(result.isPublic || (authenticated && result.userId.toString() == userId.toString()))) {
+                    console.log(0)
+                    res.status(404).json({'error': 'Not found'});
+                    return
+                }
+                if (result.type === 'folder') {
+                    res.status(400).json({'error': 'A folder doesn\'t have content'});
+                    return
+                }
+                if (!fs.existsSync(result.localPath)) {
+                    res.status(404).json({'error': 'Not found'});
+                    return
+                }
+                const ctype = mime.lookup(result.name);
+                res.setHeader('Content-Type', ctype);
+                res.status(200).sendFile(result.localPath);
+              });
+              });
+        
+
     }
 }
