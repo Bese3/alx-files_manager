@@ -186,6 +186,9 @@ export default class FilesController {
         const token = req.headers['x-token'];
         const key = `auth_${token}`;
         let userId = await redisClient.get(key);
+        if (userId === null) {
+            res.status(401).json({'error': 'Unauthorized'})
+        }
         userId = mongodb.ObjectId(userId);
         const _id = mongodb.ObjectId(req.params.id);
         await dbClient.findBy({_id, userId}, 'files')
@@ -227,6 +230,9 @@ export default class FilesController {
         const token = req.headers['x-token'];
         const key = `auth_${token}`;
         let userId = await redisClient.get(key);
+        if (userId === null) {
+            res.status(401).json({'error': 'Unauthorized'})
+        }
         userId = mongodb.ObjectId(userId);
         const _id = mongodb.ObjectId(req.params.id);
         await dbClient.findBy({_id, userId}, 'files')
