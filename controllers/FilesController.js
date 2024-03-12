@@ -93,7 +93,7 @@ export default class FilesController {
             }
             console.log(`temp file created at ${filePath}`);
         });
-        doc.filePath = filePath;
+        doc.localPath = filePath;
         const result = await dbClient.insertDB(doc, 'files');
         res.status(201).json({
             'id': result.insertedId,
