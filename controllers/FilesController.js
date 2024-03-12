@@ -5,6 +5,30 @@ import mongodb from 'mongodb';
 import { v4 as uuid4 } from 'uuid';
 import fs from 'fs';
 import mime from 'mime-types';
+import Bull from 'bull';
+const REDIS_URL = 'redis://127.0.0.1:6379';
+const fileQueue = new Bull('fileQueue', REDIS_URL);
+
+
+function copyImage(sourceFilePath, destinationFilePath) {
+    // Create a readable stream from the source file
+    const readStream = fs.createReadStream(sourceFilePath);
+
+    // Create a writable stream to the destination file
+    const writeStream = fs.createWriteStream(destinationFilePath);
+
+    // Pipe the read stream to the write stream to copy the file
+    readStream.pipe(writeStream);
+
+    // Handle events for when the copying process is complete or if an error occurs
+    writeStream.on('finish', () => {
+        console.log('Image copied successfully');
+    });
+
+    writeStream.on('error', (err) => {
+        console.error('Error copying image:', err);
+    });
+}
 
 export default class FilesController {
     static async postUpload(req, res) {
@@ -85,7 +109,13 @@ export default class FilesController {
         const path = process.env.FOLDER_PATH || '/tmp/files_manager';
         const fileName = uuid4();
         const filePath = `${path}/${fileName}`;
-        data = Buffer.from(data, 'base64').toString('utf-8');
+        // console.log(data);
+        if (type === 'image') {
+            const base64Data = data.replace(/^data:image\/\w+;base64,/, '');
+            data = Buffer.from(base64Data, 'base64');
+        } else {
+            data = Buffer.from(data, 'base64').toString('utf-8');
+        }
         if (!fs.existsSync(path)) {
             fs.mkdirSync(path, { recursive: true }, (err) => {
                 if (err) {
@@ -104,6 +134,16 @@ export default class FilesController {
         });
         doc.localPath = filePath;
         const result = await dbClient.insertDB(doc, 'files');
+        if (type === 'image') {
+            // adding jobs to the queue
+            await fileQueue.add({
+                'userId': userId.toString(),
+                'fileId': result.insertedId
+            })
+            .then(() => {
+                console.log('Job added successfully');
+            })
+        }
         res.status(201).json({
             'id': result.insertedId,
             userId,
@@ -289,6 +329,11 @@ export default class FilesController {
             return
         }
         let fileId = req.params.id;
+        let size = req.query.size || 250;
+        const allowedSize = [500, 250, 100];
+        if (!allowedSize.includes(size)) {
+            size = 250;
+        }
         let userId = await redisClient.get(`auth_${req.headers['x-token']}`);
         // if (userId === null) {
         //     res.status(404).json({'error': 'Not found'});
@@ -331,6 +376,10 @@ export default class FilesController {
                 }
                 const ctype = mime.lookup(result.name);
                 res.setHeader('Content-Type', ctype);
+                if (result.type === 'image') {
+                    res.status(200).sendFile(`${result.localPath}_${size}`);
+                    return
+                }
                 res.status(200).sendFile(result.localPath);
               });
               });
