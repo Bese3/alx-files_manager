@@ -86,6 +86,15 @@ export default class FilesController {
         const fileName = uuid4();
         const filePath = `${path}/${fileName}`;
         data = Buffer.from(data, 'base64').toString('utf-8');
+        if (!fs.existsSync(path)) {
+            fs.mkdirSync(path, { recursive: true }, (err) => {
+                if (err) {
+                    console.log(`error creating directory ${path}`);
+                } else {
+                    console.log(`Successfully created ${path} directory`);
+                }
+            })
+        }
         await fs.writeFile(filePath, data, (err) => {
 
             if(err) {
@@ -102,7 +111,7 @@ export default class FilesController {
             type,
             isPublic,
             'parentId': pid
-        })
+        });
         }
     }
 
@@ -133,7 +142,7 @@ export default class FilesController {
             result.forEach(elem => {
                 elem.id = elem._id
                 delete elem._id;
-                delete elem.filePath;
+                delete elem.localPath;
             });
             result = result.map(({id, ...result}) => ({id, ...result}))
             res.json(result[0]);
@@ -171,7 +180,7 @@ export default class FilesController {
             result.forEach(elem => {
                 elem.id = elem._id
                 delete elem._id;
-                delete elem.filePath;
+                delete elem.localPath;
             });
             result = result.map(({id, ...result}) => ({id, ...result}))
             res.json(result);
